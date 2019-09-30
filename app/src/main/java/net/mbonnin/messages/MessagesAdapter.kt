@@ -20,7 +20,7 @@ class MessagesAdapter(val messagesQueries: MessagesQueries) :
         CoroutineScope(Job() + Executors.newSingleThreadExecutor().asCoroutineDispatcher())
 
     private var dbCount = 0L
-    private var itemList = emptyList<Item>()//listOf<Item>(Item.Progress)
+    private var itemList = listOf<Item>(Item.Progress)
     private var job: Job? = null
 
     // only touched by the background thread
