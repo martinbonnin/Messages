@@ -9,3 +9,5 @@ Besides ViewBinding, this project uses:
 * Moshi as a Json parser.
 * SQLDelight as a database.
 * Coroutines for background work.
+
+![device](device.png)
