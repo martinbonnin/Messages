@@ -18,7 +18,7 @@ fun List<GetMessages>.toItems(): List<Item> {
     forEach {
         if (it.userId != lastUser) {
             if (it.userId == 1L) {
-                list.add(Item.MeName(it.name, it.id + 1L.shl(32)))
+                list.add(Item.MeName("Me", it.id + 1L.shl(32)))
             } else {
                 list.add(Item.OtherName(it.name, it.id + 1L.shl(32)))
             }
