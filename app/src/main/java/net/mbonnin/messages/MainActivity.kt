@@ -7,10 +7,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.squareup.moshi.Moshi
 import com.squareup.sqldelight.android.AndroidSqliteDriver
 import com.squareup.sqldelight.db.SqlDriver
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import net.mbonnin.messages.database.MessagesDatabase
 import net.mbonnin.messages.databinding.ActivityMainBinding
 import net.mbonnin.messages.jsonmodel.Data
@@ -34,7 +31,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         job = GlobalScope.launch(Dispatchers.IO) {
-            if (database.messagesQueries.messageCount().executeAsOne() == 0L) {
+            val databaseCount = database.messagesQueries.messageCount().executeAsOne()
+            if (databaseCount == 0L) {
                 val adapter = Moshi.Builder().build().adapter(Data::class.java)
 
                 val data = resources.openRawResource(R.raw.messages).source().buffer().use {
@@ -55,6 +53,10 @@ class MainActivity : AppCompatActivity() {
                         name = it.name
                     )
                 }
+            }
+
+            launch(Dispatchers.Main){
+                adapter.start(databaseCount)
             }
         }
 
