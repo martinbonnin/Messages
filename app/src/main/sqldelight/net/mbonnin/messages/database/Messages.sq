@@ -1,0 +1,25 @@
+CREATE TABLE dbmessage (
+  id INTEGER NOT NULL PRIMARY KEY,
+  userId INTEGER NOT NULL,
+  content TEXT NOT NULL
+);
+
+CREATE TABLE dbuser (
+  id INTEGER NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  avatarId TEXT NOT NULL
+);
+
+insertMessage:
+INSERT INTO dbmessage (id, userId, content)
+VALUES (?, ?, ?);
+
+insertUser:
+INSERT INTO dbuser (id, name, avatarId)
+VALUES (?, ?, ?);
+
+messageCount:
+SELECT count(id) FROM dbmessage;
+
+getMessages:
+SELECT dbmessage.id, dbmessage.content, dbmessage.userId, dbuser.name, dbuser.avatarId FROM dbmessage INNER JOIN dbuser ON dbmessage.userId=dbuser.id ORDER BY dbmessage.id LIMIT ? OFFSET ?;
