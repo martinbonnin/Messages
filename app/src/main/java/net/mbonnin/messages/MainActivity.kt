@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         job = GlobalScope.launch(Dispatchers.IO) {
-            val databaseCount = database.messagesQueries.messageCount().executeAsOne()
+            var databaseCount = database.messagesQueries.messageCount().executeAsOne()
             if (databaseCount == 0L) {
                 val adapter = Moshi.Builder().build().adapter(Data::class.java)
 
@@ -53,6 +53,7 @@ class MainActivity : AppCompatActivity() {
                         name = it.name
                     )
                 }
+                databaseCount = database.messagesQueries.messageCount().executeAsOne()
             }
 
             launch(Dispatchers.Main){
