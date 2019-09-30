@@ -10,4 +10,7 @@ Besides ViewBinding, this project uses:
 * SQLDelight as a database.
 * Coroutines for background work.
 
-![device](device.png)
+
+| ![device](device.png)        | ![delete](delete.png)           |
+| ------------- |:-------------:|
+

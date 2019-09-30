@@ -40,3 +40,9 @@ SELECT * FROM dbattachment WHERE messageId=? ORDER BY idx;
 
 getMessages:
 SELECT dbmessage.id, dbmessage.content, dbmessage.userId, dbuser.name, dbuser.avatarId FROM dbmessage INNER JOIN dbuser ON dbmessage.userId=dbuser.id ORDER BY dbmessage.id LIMIT ? OFFSET ?;
+
+deleteMessage:
+DELETE FROM dbmessage WHERE id=?;
+
+deleteAttachment:
+DELETE FROM dbattachment WHERE id=?;

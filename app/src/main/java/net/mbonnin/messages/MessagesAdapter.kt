@@ -16,8 +16,7 @@ import java.util.concurrent.Executors
 class MessagesAdapter(val messagesQueries: MessagesQueries) :
     RecyclerView.Adapter<MessagesAdapter.ViewHolder>() {
     private var displayedMessageCount = 0
-    private val scope =
-        CoroutineScope(Job() + Executors.newSingleThreadExecutor().asCoroutineDispatcher())
+    private val scope = CoroutineScope(Job() + Executors.newSingleThreadExecutor().asCoroutineDispatcher())
 
     private var dbCount = 0L
     private var itemList = listOf<Item>(Item.Progress)
@@ -166,9 +165,38 @@ class MessagesAdapter(val messagesQueries: MessagesQueries) :
         scope.cancel()
     }
 
+    fun removeAt(position: Int): Item {
+        val newList = itemList.toMutableList()
+        val removedItem = newList.removeAt(position)
+        itemList = newList.sanitize()
+
+        // TODO: use DiffUtils or a framework like Epoxy
+        notifyDataSetChanged()
+
+        return removedItem
+    }
+
     class ViewHolder(val binding: ViewBinding) : RecyclerView.ViewHolder(binding.root)
 }
 
+/**
+ * Make sure there are no 2 consecutive names without any messages or attachments. This can happen if all messages/attachment get removed.
+ */
+fun List<Item>.sanitize(): List<Item> {
+    return fold(mutableListOf()) { list, item ->
+        if (item is Item.MeName || item is Item.OtherName) {
+            val previousItem = list.lastOrNull()
+            if (previousItem is Item.MeName || previousItem is Item.OtherName) {
+                list.removeAt(list.size - 1)
+            }
+        }
+        list.add(item)
+        list
+    }
+
+
+
+}
 fun List<GetMessages>.toItems(messagesQueries: MessagesQueries): List<Item> {
     var lastUser = -1L
 
@@ -194,7 +222,7 @@ fun List<GetMessages>.toItems(messagesQueries: MessagesQueries): List<Item> {
         }
 
         messagesQueries.getAttachments(dbMessage.id).executeAsList().forEach {dbAttachment ->
-            list.add(Item.Attachment(dbAttachment.title, dbAttachment.thumbnailUrl, dbMessage.id + dbAttachment.idx.shl(33)))
+            list.add(Item.Attachment(dbAttachment.title, dbAttachment.thumbnailUrl, dbAttachment.id, dbMessage.id + dbAttachment.idx.shl(33)))
         }
 
         continuation = true
