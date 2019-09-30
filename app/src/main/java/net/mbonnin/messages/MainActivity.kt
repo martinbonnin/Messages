@@ -39,13 +39,24 @@ class MainActivity : AppCompatActivity() {
                     adapter.fromJson(it)
                 }!!
 
-                data.messages.forEach {
+                data.messages.forEach { message ->
                     database.messagesQueries.insertMessage(
-                        id = it.id,
-                        userId = it.userId,
-                        content = it.content
+                        id = message.id,
+                        userId = message.userId,
+                        content = message.content
                     )
+                    message.attachments?.forEachIndexed { index, attachment ->
+                        database.messagesQueries.insertAttachment(
+                            id = attachment.id,
+                            messageId = message.id,
+                            idx = index.toLong(),
+                            title = attachment.title,
+                            url = attachment.url,
+                            thumbnailUrl = attachment.thumbnailUrl
+                        )
+                    }
                 }
+
                 data.users.forEach {
                     database.messagesQueries.insertUser(
                         id = it.id,
@@ -56,7 +67,7 @@ class MainActivity : AppCompatActivity() {
                 databaseCount = database.messagesQueries.messageCount().executeAsOne()
             }
 
-            launch(Dispatchers.Main){
+            launch(Dispatchers.Main) {
                 adapter.start(databaseCount)
             }
         }

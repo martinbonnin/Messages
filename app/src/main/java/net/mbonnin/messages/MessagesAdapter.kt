@@ -11,7 +11,6 @@ import net.mbonnin.messages.database.GetMessages
 import net.mbonnin.messages.database.MessagesQueries
 import net.mbonnin.messages.databinding.*
 import net.mbonnin.messages.item.Item
-import net.mbonnin.messages.item.toItems
 import java.util.concurrent.Executors
 
 class MessagesAdapter(val messagesQueries: MessagesQueries) :
@@ -21,7 +20,7 @@ class MessagesAdapter(val messagesQueries: MessagesQueries) :
         CoroutineScope(Job() + Executors.newSingleThreadExecutor().asCoroutineDispatcher())
 
     private var dbCount = 0L
-    private var itemList = listOf<Item>(Item.Progress)
+    private var itemList = emptyList<Item>()//listOf<Item>(Item.Progress)
     private var job: Job? = null
 
     // only touched by the background thread
@@ -55,7 +54,7 @@ class MessagesAdapter(val messagesQueries: MessagesQueries) :
                     ).executeAsList()
                 )
 
-                val itemList = dbMessageList.toItems()
+                val itemList = dbMessageList.toItems(messagesQueries)
                 launch(Dispatchers.Main) {
                     setItems(itemList, dbMessageList.size)
                     job = null
@@ -96,6 +95,11 @@ class MessagesAdapter(val messagesQueries: MessagesQueries) :
                 parent,
                 false
             )
+            R.layout.item_attachment -> ItemAttachmentBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
             else -> throw Exception("unsupported viewType: $viewType")
         }
 
@@ -128,6 +132,14 @@ class MessagesAdapter(val messagesQueries: MessagesQueries) :
 
                 }
             }
+            is Item.Attachment -> {
+                (holder.binding as ItemAttachmentBinding).title.text = item.title
+                val imageView = holder.binding.thumbnail
+                imageView.load(item.thumbnailUrl.replace("http://", "https://")) {
+                    crossfade(true)
+                    placeholder(R.color.black)
+                }
+            }
         }
 
         if (displayedMessageCount - 1 - position < 5) {
@@ -146,6 +158,7 @@ class MessagesAdapter(val messagesQueries: MessagesQueries) :
             is Item.MeMessage -> R.layout.item_me_message
             is Item.OtherMessage -> R.layout.item_other_message
             is Item.Progress -> R.layout.item_progress
+            is Item.Attachment -> R.layout.item_attachment
         }
     }
 
@@ -154,4 +167,39 @@ class MessagesAdapter(val messagesQueries: MessagesQueries) :
     }
 
     class ViewHolder(val binding: ViewBinding) : RecyclerView.ViewHolder(binding.root)
+}
+
+fun List<GetMessages>.toItems(messagesQueries: MessagesQueries): List<Item> {
+    var lastUser = -1L
+
+    val list = mutableListOf<Item>()
+    var continuation = false
+    forEach { dbMessage ->
+        if (dbMessage.userId != lastUser) {
+            if (dbMessage.userId == 1L) {
+                list.add(Item.MeName("Me", dbMessage.id + 1L.shl(32)))
+            } else {
+                list.add(Item.OtherName(dbMessage.name, dbMessage.id + 1L.shl(32)))
+            }
+            continuation = false
+        }
+
+        if (dbMessage.userId == 1L) {
+            list.add(Item.MeMessage(dbMessage.content, dbMessage.id))
+        } else {
+            list.add(Item.OtherMessage(
+                dbMessage.content,
+                if (continuation) null else dbMessage.avatarId,
+                dbMessage.id))
+        }
+
+        messagesQueries.getAttachments(dbMessage.id).executeAsList().forEach {dbAttachment ->
+            list.add(Item.Attachment(dbAttachment.title, dbAttachment.thumbnailUrl, dbMessage.id + dbAttachment.idx.shl(33)))
+        }
+
+        continuation = true
+        lastUser = dbMessage.userId
+
+    }
+    return list
 }

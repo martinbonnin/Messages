@@ -10,6 +10,16 @@ CREATE TABLE dbuser (
   avatarId TEXT NOT NULL
 );
 
+CREATE TABLE dbattachment (
+  id TEXT NOT NULL PRIMARY KEY,
+  idx INTEGER NOT NULL,
+  messageId INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  url TEXT NOT NULL,
+  thumbnailUrl TEXT NOT NULL
+);
+
+
 insertMessage:
 INSERT INTO dbmessage (id, userId, content)
 VALUES (?, ?, ?);
@@ -18,8 +28,15 @@ insertUser:
 INSERT INTO dbuser (id, name, avatarId)
 VALUES (?, ?, ?);
 
+insertAttachment:
+INSERT INTO dbattachment (id, idx, messageId, title, url, thumbnailUrl)
+VALUES (?, ?, ?, ?, ?, ?);
+
 messageCount:
 SELECT count(id) FROM dbmessage;
+
+getAttachments:
+SELECT * FROM dbattachment WHERE messageId=? ORDER BY idx;
 
 getMessages:
 SELECT dbmessage.id, dbmessage.content, dbmessage.userId, dbuser.name, dbuser.avatarId FROM dbmessage INNER JOIN dbuser ON dbmessage.userId=dbuser.id ORDER BY dbmessage.id LIMIT ? OFFSET ?;
