@@ -4,6 +4,8 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
+import coil.api.load
+import coil.transform.CircleCropTransformation
 import kotlinx.coroutines.*
 import net.mbonnin.messages.database.GetMessages
 import net.mbonnin.messages.database.MessagesQueries
@@ -15,7 +17,8 @@ import java.util.concurrent.Executors
 class MessagesAdapter(val messagesQueries: MessagesQueries) :
     RecyclerView.Adapter<MessagesAdapter.ViewHolder>() {
     private var displayedMessageCount = 0
-    private val scope = CoroutineScope(Job() + Executors.newSingleThreadExecutor().asCoroutineDispatcher())
+    private val scope =
+        CoroutineScope(Job() + Executors.newSingleThreadExecutor().asCoroutineDispatcher())
 
     private var dbCount = 0L
     private var itemList = listOf<Item>(Item.Progress)
@@ -45,7 +48,12 @@ class MessagesAdapter(val messagesQueries: MessagesQueries) :
         scope.launch {
             val offset = dbMessageList.size.toLong()
             if (offset < dbCount) {
-                dbMessageList.addAll(messagesQueries.getMessages(offset + 20, offset).executeAsList())
+                dbMessageList.addAll(
+                    messagesQueries.getMessages(
+                        offset + 20,
+                        offset
+                    ).executeAsList()
+                )
 
                 val itemList = dbMessageList.toItems()
                 launch(Dispatchers.Main) {
@@ -63,11 +71,31 @@ class MessagesAdapter(val messagesQueries: MessagesQueries) :
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = when (viewType) {
-            R.layout.item_me_name -> ItemMeNameBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-            R.layout.item_other_name -> ItemOtherNameBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-            R.layout.item_me_message -> ItemMeMessageBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-            R.layout.item_other_message -> ItemOtherMessageBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-            R.layout.item_progress -> ItemProgressBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+            R.layout.item_me_name -> ItemMeNameBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+            R.layout.item_other_name -> ItemOtherNameBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+            R.layout.item_me_message -> ItemMeMessageBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+            R.layout.item_other_message -> ItemOtherMessageBinding.inflate(
+                LayoutInflater.from(
+                    parent.context
+                ), parent, false
+            )
+            R.layout.item_progress -> ItemProgressBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
             else -> throw Exception("unsupported viewType: $viewType")
         }
 
@@ -92,6 +120,11 @@ class MessagesAdapter(val messagesQueries: MessagesQueries) :
             }
             is Item.OtherMessage -> {
                 (holder.binding as ItemOtherMessageBinding).message.text = item.content
+                (holder.binding as ItemOtherMessageBinding).avatar.load(item.avatar) {
+                    crossfade(true)
+                    placeholder(R.color.white)
+                    transformations(CircleCropTransformation())
+                }
             }
         }
 
