@@ -120,10 +120,12 @@ class MessagesAdapter(val messagesQueries: MessagesQueries) :
             }
             is Item.OtherMessage -> {
                 (holder.binding as ItemOtherMessageBinding).message.text = item.content
-                (holder.binding as ItemOtherMessageBinding).avatar.load(item.avatar) {
+                val imageView = holder.binding.avatar
+                imageView.load(item.avatar) {
                     crossfade(true)
                     placeholder(R.color.white)
                     transformations(CircleCropTransformation())
+
                 }
             }
         }

@@ -2,6 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingRight="16dp"
+        android:paddingTop="4dp"
         xmlns:tools="http://schemas.android.com/tools"
         android:orientation="horizontal">
 
@@ -24,6 +26,7 @@
         <TextView
                 android:id="@+id/message"
                 android:layout_width="wrap_content"
+                android:textColor="@color/black"
                 tools:text="A message that is long enought so that it wraps on a second line"
                 android:background="@drawable/background_other_message"
                 android:layout_height="wrap_content" />
