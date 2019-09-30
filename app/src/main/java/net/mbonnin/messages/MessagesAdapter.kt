@@ -14,33 +14,51 @@ import java.util.concurrent.Executors
 
 class MessagesAdapter(val messagesQueries: MessagesQueries) :
     RecyclerView.Adapter<MessagesAdapter.ViewHolder>() {
-    val scope = CoroutineScope(Job() + Executors.newSingleThreadExecutor().asCoroutineDispatcher())
+    private var displayedMessageCount = 0
+    private val scope = CoroutineScope(Job() + Executors.newSingleThreadExecutor().asCoroutineDispatcher())
 
-
-    var itemList = listOf<Item>(Item.Progress)
+    private var dbCount = 0L
+    private var itemList = listOf<Item>(Item.Progress)
+    private var job: Job? = null
 
     // only touched by the background thread
-    var dbMessageList = mutableListOf<GetMessages>()
+    private var dbMessageList = mutableListOf<GetMessages>()
 
     init {
         setHasStableIds(true)
     }
 
-    private fun setItems(items: List<Item>) {
-        itemList = items
+    private fun setItems(
+        items: List<Item>,
+        displayedMessageCount: Int
+    ) {
+        this.itemList = items
+        this.displayedMessageCount = displayedMessageCount
         notifyDataSetChanged()
     }
 
-    fun start(dbCount: Long) {
+    fun loadMore() {
+        if (job != null) {
+            return
+        }
+
         scope.launch {
             val offset = dbMessageList.size.toLong()
-            dbMessageList.addAll(messagesQueries.getMessages(offset + 20, offset).executeAsList())
+            if (offset < dbCount) {
+                dbMessageList.addAll(messagesQueries.getMessages(offset + 20, offset).executeAsList())
 
-            val itemList = dbMessageList.toItems()
-            scope.launch(Dispatchers.Main) {
-                setItems(itemList)
+                val itemList = dbMessageList.toItems()
+                launch(Dispatchers.Main) {
+                    setItems(itemList, dbMessageList.size)
+                    job = null
+                }
             }
         }
+    }
+
+    fun start(dbCount: Long) {
+        this.dbCount = dbCount
+        loadMore()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -75,6 +93,10 @@ class MessagesAdapter(val messagesQueries: MessagesQueries) :
             is Item.OtherMessage -> {
                 (holder.binding as ItemOtherMessageBinding).message.text = item.content
             }
+        }
+
+        if (displayedMessageCount - 1 - position < 5) {
+            loadMore()
         }
     }
 
